@@ -27,7 +27,6 @@ const posts = [
     userId: 1,
   },
 ];
-
 const http = require("http");
 const server = http.createServer();
 
@@ -51,7 +50,37 @@ const httpRequestListener = function (request, response) {
           password: user.password,
         });
         response.writeHead(200, { "Content-Type": "application/json" });
-        response.end(JSON.stringify({ message: "userCreated" }));
+        response.end(
+          JSON.stringify({
+            message: "userCreated",
+            users: users,
+            // BUG "users": users, 왜 users 따옴표 없어지냐?
+            // FIXED 원래 key 값 부분에는 안되는듯
+          })
+        );
+      });
+    } else if (url === "/posts") {
+      let body = "";
+
+      request.on("data", (data) => {
+        body += data;
+      });
+      request.on("end", () => {
+        const post = JSON.parse(body);
+
+        posts.push({
+          id: post.id,
+          title: post.title,
+          content: post.content,
+          userId: post.userId,
+        });
+        response.writeHead(200, { "Content-Type": "application/json" });
+        response.end(
+          JSON.stringify({
+            message: "postCreated",
+            posts: posts,
+          })
+        );
       });
     }
   }
@@ -67,5 +96,9 @@ server.listen(PORT, IP, function () {
 });
 
 /* NOTE 유저 정보 테스트 입력 값
-http -v POST 127.0.0.1:8000/users/signup id=3, name="김테스트", email="test@gmail.com", password="test_password"
+http -v POST 127.0.0.1:8000/users/signup id:=3 name="김테스트" email="test@gmail.com" password="test_password"
+ */
+/* 
+NOTE 게시물 생성 테스트 입력 값
+http -v POST 127.0.0.1:8000/posts id:=3 title="테스트 타이틀" content="테스트 내용" userId:=2            
  */
